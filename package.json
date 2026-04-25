@@ -1,0 +1,34 @@
+{
+  "name": "pantry",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "dev": "pnpm run --parallel dev:web dev:server",
+    "dev:web": "pnpm --filter @pantry/web dev",
+    "dev:server": "pnpm --filter @pantry/server dev",
+    "build": "pnpm --filter @pantry/web build && pnpm --filter @pantry/server build",
+    "typecheck": "tsc -p tsconfig.json --noEmit && pnpm -r typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm run test:unit && pnpm run test:smoke",
+    "test:unit": "vitest run",
+    "test:smoke": "playwright test",
+    "clean": "pnpm -r exec rm -rf dist node_modules .turbo && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@playwright/test": "^1.49.1",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.17.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.19.1",
+    "vitest": "^2.1.8"
+  }
+}
