@@ -359,7 +359,6 @@ export const mealPlanWeek: MealPlan = {
 export const freezerItems: FreezerItem[] = [
   {
     id: 'fi-chili',
-    productId: 'recipe-chili',
     name: 'Chili con carne',
     portions: 3,
     createdAt: '2026-04-19T20:00:00Z',
