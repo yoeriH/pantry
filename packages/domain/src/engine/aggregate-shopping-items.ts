@@ -44,5 +44,10 @@ export function aggregateShoppingItems(items: ShoppingListItem[]): ShoppingListI
     }
   }
 
-  return order.map((key) => map.get(key)!);
+  return order.map((key) => {
+    const item = map.get(key);
+    // key was added to `order` exactly when it was inserted into `map`, so this is always defined.
+    if (!item) throw new Error(`aggregateShoppingItems: key ${key} missing from map`);
+    return item;
+  });
 }

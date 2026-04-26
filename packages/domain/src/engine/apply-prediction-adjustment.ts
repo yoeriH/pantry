@@ -22,8 +22,9 @@ export function applyPredictionAdjustment(
   };
 
   const adjustedIntervalDays = prediction.averageIntervalDays * multipliers[adjustment];
-  const lastPurchaseDates = prediction.lastPurchaseDates;
-  const lastPurchaseDate = lastPurchaseDates[lastPurchaseDates.length - 1] ?? lastPurchaseDates[0];
+  // lastPurchaseDates is a non-empty tuple — the last element is always present.
+  const dates = prediction.lastPurchaseDates;
+  const lastPurchaseDate = dates[(dates.length - 1) as 0];
   const nextExpectedPurchaseDate = addDays(lastPurchaseDate, adjustedIntervalDays);
 
   return {
