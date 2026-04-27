@@ -11,6 +11,6 @@ export { aggregateShoppingItems } from './aggregate-shopping-items.js';
 export type { GenerateShoppingListInput } from './generate-shopping-list.js';
 export { generateShoppingList } from './generate-shopping-list.js';
 export { resolveShoppingItem } from './resolve-shopping-item.js';
-export type { CompleteShoppingResult } from './complete-shopping.js';
+export type { CompleteShoppingInput, CompleteShoppingResult } from './complete-shopping.js';
 export { completeShopping } from './complete-shopping.js';
 export { consumeFreezerItem } from './consume-freezer-item.js';
