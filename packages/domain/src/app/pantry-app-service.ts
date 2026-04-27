@@ -52,9 +52,16 @@ export interface PantryAppServiceDeps {
   freezerItems: FreezerItemRepository;
   shoppingLists: ShoppingListRepository;
   purchaseHistory: PurchaseHistoryRepository;
-  /** Override for testing to keep ids deterministic. */
+  /** Override for testing to generate deterministic IDs. Defaults to timestamp-based ID generation in production. */
   createId?: (prefix: string) => string;
 }
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Number of days in one week — used when shifting meal plan entries. */
+const DAYS_IN_WEEK = 7;
 
 // ---------------------------------------------------------------------------
 // Result types
@@ -218,14 +225,14 @@ export class PantryAppService {
    * Returns undefined (and saves nothing) when no plan exists for the previous week.
    */
   copyPreviousWeek(targetWeekStartDate: string): MealPlan | undefined {
-    const previousWeekStartDate = addDays(targetWeekStartDate, -7);
+    const previousWeekStartDate = addDays(targetWeekStartDate, -DAYS_IN_WEEK);
     const previousPlan = this.getMealPlan(previousWeekStartDate);
     if (!previousPlan) return undefined;
 
     const newEntries: MealPlanEntry[] = previousPlan.entries.map((entry) => ({
       ...entry,
       id: this.repos.createId('mpe'),
-      date: addDays(entry.date, 7),
+      date: addDays(entry.date, DAYS_IN_WEEK),
     }));
 
     const newPlan: MealPlan = {
