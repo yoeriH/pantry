@@ -13,3 +13,5 @@ export * from './freezer.js';
 export * from './shopping-list.js';
 export * as fixtures from './fixtures.js';
 export * as engine from './engine/index.js';
+export * as storage from './storage/local-storage.js';
+export * as repositories from './repositories/index.js';
