@@ -1,15 +1,23 @@
+import { LitElement, html, css } from 'lit';
+
 import '@shoelace-style/shoelace/dist/components/tab-group/tab-group.js';
 import '@shoelace-style/shoelace/dist/components/tab/tab.js';
 import '@shoelace-style/shoelace/dist/components/tab-panel/tab-panel.js';
 
-class AppRoot extends HTMLElement {
-  connectedCallback(): void {
-    const shadow = this.attachShadow({ mode: 'open' });
-    shadow.innerHTML = `
-      <style>
-        :host { display: block; max-width: 960px; margin: 0 auto; }
-        sl-tab-group { --track-color: transparent; }
-      </style>
+class AppRoot extends LitElement {
+  static override styles = css`
+    :host {
+      display: block;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    sl-tab-group {
+      --track-color: transparent;
+    }
+  `;
+
+  protected override render(): unknown {
+    return html`
       <sl-tab-group>
         <sl-tab slot="nav" panel="shopping">Boodschappen</sl-tab>
         <sl-tab slot="nav" panel="meals">Weekmenu</sl-tab>
