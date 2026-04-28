@@ -152,7 +152,10 @@ class FreezerPage extends HTMLElement {
       10,
     );
 
-    if (!name || portions < 1) return;
+    if (!name || portions < 1) {
+      alert('Vul een naam in en geef minimaal 1 portie op.');
+      return;
+    }
 
     const now = new Date().toISOString();
 

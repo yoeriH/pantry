@@ -272,7 +272,7 @@ class WeekPlanPage extends HTMLElement {
       date: this.editingDate,
       moment: this.editingMoment,
       type,
-      quantity: 1,
+      quantity: 1, // 1 = one full household meal (domain default)
       ...(this.editingEntry?.id !== undefined ? { id: this.editingEntry.id } : {}),
       ...(recipeId ? { recipeId } : {}),
       ...(freezerItemId ? { freezerItemId } : {}),

@@ -171,8 +171,12 @@ class RecipesPage extends HTMLElement {
 
     shadow.getElementById('add-ingredient-btn')?.addEventListener('click', () => {
       const products = service.getProducts();
+      if (products.length === 0) {
+        alert('Voeg eerst producten toe voordat je ingrediënten kunt toevoegen.');
+        return;
+      }
       this.ingredients.push({
-        productId: products[0]?.id ?? '',
+        productId: products[0]!.id,
         quantity: 1,
         unit: Unit.stuk,
         flags: [IngredientFlag.fresh],
@@ -243,7 +247,10 @@ class RecipesPage extends HTMLElement {
   private saveRecipe(): void {
     const shadow = this.shadowRoot!;
     const name = (shadow.getElementById('rd-name') as HTMLElement & { value: string }).value.trim();
-    if (!name) return;
+    if (!name) {
+      alert('Vul een naam in voor het recept.');
+      return;
+    }
 
     const ingredients = this.collectIngredients();
     const recipeData: Omit<Recipe, 'id'> = { name, ingredients };

@@ -64,7 +64,9 @@ export function shiftDate(dateStr: string, days: number): string {
 export function getCurrentWeekStart(): string {
   const today = new Date();
   const day = today.getDay(); // 0=Sun, 6=Sat
-  const daysBack = day === 6 ? 0 : day + 1;
+  // Days to subtract to reach the most recent Saturday:
+  //   Sat(6)→0, Sun(0)→1, Mon(1)→2, …, Fri(5)→6
+  const daysBack = (day + 1) % 7;
   const sat = new Date(today);
   sat.setDate(today.getDate() - daysBack);
   return sat.toISOString().slice(0, 10);

@@ -167,7 +167,10 @@ class ProductsPage extends HTMLElement {
       | Unit
       | '';
 
-    if (!name || !category) return;
+    if (!name || !category) {
+      alert('Vul naam en categorie in.');
+      return;
+    }
 
     const input = {
       name,

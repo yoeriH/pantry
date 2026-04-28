@@ -224,7 +224,10 @@ class ShoppingPage extends HTMLElement {
     const category = (shadow.getElementById('mi-category') as HTMLElement & { value: string })
       .value as ProductCategory;
 
-    if (!productInput || !unit || !category || isNaN(qty) || qty <= 0) return;
+    if (!productInput || !unit || !category || isNaN(qty) || qty <= 0) {
+      alert('Vul product, hoeveelheid, eenheid en categorie in.');
+      return;
+    }
 
     const products = service.getProducts();
     const product = products.find(
