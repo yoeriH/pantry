@@ -3,6 +3,8 @@
  * Custom element: <meal-recipes-page>
  */
 
+import { LitElement, html, css } from 'lit';
+
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
@@ -15,248 +17,282 @@ import { Unit, IngredientFlag } from '@pantry/domain';
 import { service } from '../services.js';
 import { UNIT_LABELS } from '../labels.js';
 
-class RecipesPage extends HTMLElement {
-  private editingId: string | null = null;
-  private ingredients: RecipeIngredient[] = [];
+type SlWithValue = HTMLElement & { value: string };
+type SlDialog = HTMLElement & { show(): void; hide(): void };
 
-  connectedCallback(): void {
-    this.attachShadow({ mode: 'open' });
-    this.render();
-  }
+class RecipesPage extends LitElement {
+  private _editingId: string | null = null;
+  private _ingredients: RecipeIngredient[] = [];
 
-  private render(): void {
+  static override styles = css`
+    :host {
+      display: block;
+      padding: 1rem;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    h2 {
+      margin: 0;
+    }
+    .recipe-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .recipe-item {
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .recipe-name {
+      font-weight: 500;
+    }
+    .recipe-meta {
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .actions {
+      display: flex;
+      gap: 0.25rem;
+    }
+    .empty {
+      color: #888;
+      padding: 2rem 0;
+      text-align: center;
+    }
+    .ingredient-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-end;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .ingredient-row sl-input {
+      flex: 1;
+      min-width: 80px;
+    }
+    .ingredient-list {
+      margin-top: 0.5rem;
+    }
+    label {
+      font-size: 0.85rem;
+      color: #555;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+    select {
+      padding: 0.4rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+  `;
+
+  protected override render(): unknown {
     const recipes = service.getRecipes();
-    const shadow = this.shadowRoot!;
+    const products = service.getProducts();
 
-    shadow.innerHTML = `
-      <style>
-        :host { display: block; padding: 1rem; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-        h2 { margin: 0; }
-        .recipe-list { display: flex; flex-direction: column; gap: 0.5rem; }
-        .recipe-item { border: 1px solid #e0e0e0; border-radius: 4px; padding: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
-        .recipe-name { font-weight: 500; }
-        .recipe-meta { font-size: 0.85rem; color: #666; }
-        .actions { display: flex; gap: 0.25rem; }
-        .empty { color: #888; padding: 2rem 0; text-align: center; }
-        .ingredient-row { display: flex; gap: 0.5rem; align-items: flex-end; margin-bottom: 0.5rem; flex-wrap: wrap; }
-        .ingredient-row sl-input { flex: 1; min-width: 80px; }
-        .ingredient-list { margin-top: 0.5rem; }
-        label { font-size: 0.85rem; color: #555; display: block; margin-bottom: 0.25rem; }
-      </style>
+    return html`
       <div class="header">
         <h2>Recepten</h2>
-        <sl-button id="add-btn" variant="primary" size="small">+ Nieuw recept</sl-button>
+        <sl-button variant="primary" size="small" @click=${() => this._openDialog(null)}>
+          + Nieuw recept
+        </sl-button>
       </div>
-      ${
-        recipes.length === 0
-          ? '<p class="empty">Nog geen recepten. Voeg een recept toe om te beginnen.</p>'
-          : `
-      <div class="recipe-list">
-        ${recipes
-          .map(
-            (r) => `
-          <div class="recipe-item">
-            <div>
-              <div class="recipe-name">${escHtml(r.name)}</div>
-              <div class="recipe-meta">${r.ingredients.length} ingrediënt${r.ingredients.length !== 1 ? 'en' : ''}</div>
-            </div>
-            <div class="actions">
-              <sl-icon-button name="pencil" label="Bewerken" data-id="${r.id}" data-action="edit"></sl-icon-button>
-              <sl-icon-button name="copy" label="Dupliceren" data-id="${r.id}" data-action="duplicate"></sl-icon-button>
-              <sl-icon-button name="trash" label="Verwijderen" data-id="${r.id}" data-action="delete"></sl-icon-button>
-            </div>
-          </div>
-        `,
-          )
-          .join('')}
-      </div>`
-      }
+      ${recipes.length === 0
+        ? html`<p class="empty">Nog geen recepten. Voeg een recept toe om te beginnen.</p>`
+        : html`<div class="recipe-list">
+            ${recipes.map(
+              (r) => html`
+                <div class="recipe-item">
+                  <div>
+                    <div class="recipe-name">${r.name}</div>
+                    <div class="recipe-meta">
+                      ${r.ingredients.length} ingrediënt${r.ingredients.length !== 1 ? 'en' : ''}
+                    </div>
+                  </div>
+                  <div class="actions">
+                    <sl-icon-button
+                      name="pencil"
+                      label="Bewerken"
+                      @click=${() => this._openDialog(r.id)}
+                    ></sl-icon-button>
+                    <sl-icon-button
+                      name="copy"
+                      label="Dupliceren"
+                      @click=${() => this._duplicate(r.id)}
+                    ></sl-icon-button>
+                    <sl-icon-button
+                      name="trash"
+                      label="Verwijderen"
+                      @click=${() => this._delete(r.id)}
+                    ></sl-icon-button>
+                  </div>
+                </div>
+              `,
+            )}
+          </div>`}
+
       <sl-dialog id="recipe-dialog" label="Recept" style="--width: 600px;">
         <sl-input id="rd-name" label="Naam" required></sl-input>
         <div class="ingredient-list">
-          <br>
+          <br />
           <label>Ingrediënten</label>
-          <div id="ingredients-container"></div>
-          <sl-button id="add-ingredient-btn" size="small" variant="default">+ Ingrediënt</sl-button>
+          ${this._ingredients.map(
+            (ing, i) => html`
+              <div class="ingredient-row">
+                <div>
+                  <label>Product</label>
+                  <select
+                    .value=${ing.productId}
+                    @change=${(e: Event) =>
+                      this._updateIngredient(i, 'productId', (e.target as HTMLSelectElement).value)}
+                  >
+                    <option value="">— kies product —</option>
+                    ${products.map((p) => html`<option value=${p.id}>${p.name}</option>`)}
+                  </select>
+                </div>
+                <sl-input
+                  label="Hoeveelheid"
+                  type="number"
+                  min="0"
+                  .value=${String(ing.quantity)}
+                  style="width:100px;"
+                  @sl-input=${(e: Event) =>
+                    this._updateIngredient(
+                      i,
+                      'quantity',
+                      parseFloat((e.target as SlWithValue).value),
+                    )}
+                ></sl-input>
+                <div>
+                  <label>Eenheid</label>
+                  <select
+                    .value=${ing.unit}
+                    @change=${(e: Event) =>
+                      this._updateIngredient(
+                        i,
+                        'unit',
+                        (e.target as HTMLSelectElement).value as Unit,
+                      )}
+                  >
+                    ${Object.entries(UNIT_LABELS).map(
+                      ([v, l]) => html`<option value=${v}>${l}</option>`,
+                    )}
+                  </select>
+                </div>
+                <sl-icon-button
+                  name="trash"
+                  label="Verwijderen"
+                  @click=${() => this._removeIngredient(i)}
+                ></sl-icon-button>
+              </div>
+            `,
+          )}
+          <sl-button size="small" variant="default" @click=${() => this._addIngredient()}>
+            + Ingrediënt
+          </sl-button>
         </div>
-        <sl-button slot="footer" variant="default" id="rd-cancel">Annuleren</sl-button>
-        <sl-button slot="footer" variant="primary" id="rd-save">Opslaan</sl-button>
+        <sl-button slot="footer" variant="default" @click=${() => this._closeDialog()}>
+          Annuleren
+        </sl-button>
+        <sl-button slot="footer" variant="primary" @click=${() => this._saveRecipe()}>
+          Opslaan
+        </sl-button>
       </sl-dialog>
     `;
-
-    this.bindEvents();
   }
 
-  private renderIngredients(): void {
-    const container = this.shadowRoot!.getElementById('ingredients-container')!;
+  private _duplicate(id: string): void {
+    service.duplicateRecipe(id);
+    this.requestUpdate();
+  }
+
+  private _delete(id: string): void {
+    if (confirm('Recept verwijderen?')) {
+      service.deleteRecipe(id);
+      this.requestUpdate();
+    }
+  }
+
+  private _addIngredient(): void {
     const products = service.getProducts();
-    const productOptions = products
-      .map((p) => `<option value="${p.id}">${escHtml(p.name)}</option>`)
-      .join('');
-
-    container.innerHTML = this.ingredients
-      .map(
-        (ing, i) => `
-      <div class="ingredient-row" data-index="${i}">
-        <div>
-          <label>Product</label>
-          <select class="ing-product" data-index="${i}" style="padding:0.4rem;border:1px solid #ccc;border-radius:4px;">
-            <option value="">— kies product —</option>
-            ${productOptions}
-          </select>
-        </div>
-        <sl-input class="ing-qty" data-index="${i}" label="Hoeveelheid" type="number" min="0" value="${ing.quantity}" style="width:100px;"></sl-input>
-        <div>
-          <label>Eenheid</label>
-          <select class="ing-unit" data-index="${i}" style="padding:0.4rem;border:1px solid #ccc;border-radius:4px;">
-            ${Object.entries(UNIT_LABELS)
-              .map(
-                ([v, l]) =>
-                  `<option value="${v}" ${ing.unit === v ? 'selected' : ''}>${l}</option>`,
-              )
-              .join('')}
-          </select>
-        </div>
-        <sl-icon-button name="trash" label="Verwijderen" class="remove-ing" data-index="${i}"></sl-icon-button>
-      </div>
-    `,
-      )
-      .join('');
-
-    // Set the product select value after rendering
-    container.querySelectorAll('.ing-product').forEach((sel) => {
-      const idx = parseInt((sel as HTMLElement).dataset['index'] ?? '0');
-      const ing = this.ingredients[idx];
-      if (ing) (sel as HTMLSelectElement).value = ing.productId;
-    });
-
-    container.querySelectorAll('.remove-ing').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const idx = parseInt((btn as HTMLElement).dataset['index'] ?? '0');
-        this.ingredients.splice(idx, 1);
-        this.renderIngredients();
-      });
-    });
-  }
-
-  private bindEvents(): void {
-    const shadow = this.shadowRoot!;
-
-    shadow.getElementById('add-btn')?.addEventListener('click', () => {
-      this.openDialog(null);
-    });
-
-    shadow.querySelectorAll('[data-action="edit"]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        this.openDialog((btn as HTMLElement).dataset['id']!);
-      });
-    });
-
-    shadow.querySelectorAll('[data-action="duplicate"]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        service.duplicateRecipe((btn as HTMLElement).dataset['id']!);
-        this.render();
-      });
-    });
-
-    shadow.querySelectorAll('[data-action="delete"]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        if (confirm('Recept verwijderen?')) {
-          service.deleteRecipe((btn as HTMLElement).dataset['id']!);
-          this.render();
-        }
-      });
-    });
-
-    shadow.getElementById('add-ingredient-btn')?.addEventListener('click', () => {
-      const products = service.getProducts();
-      if (products.length === 0) {
-        alert('Voeg eerst producten toe voordat je ingrediënten kunt toevoegen.');
-        return;
-      }
-      this.ingredients.push({
+    if (products.length === 0) {
+      alert('Voeg eerst producten toe voordat je ingrediënten kunt toevoegen.');
+      return;
+    }
+    this._ingredients = [
+      ...this._ingredients,
+      {
         productId: products[0]!.id,
         quantity: 1,
         unit: Unit.stuk,
         flags: [IngredientFlag.fresh],
-      });
-      this.renderIngredients();
-    });
-
-    shadow.getElementById('rd-cancel')?.addEventListener('click', () => {
-      this.closeDialog();
-    });
-
-    shadow.getElementById('rd-save')?.addEventListener('click', () => {
-      this.saveRecipe();
-    });
+      },
+    ];
+    this.requestUpdate();
   }
 
-  private openDialog(recipeId: string | null): void {
-    this.editingId = recipeId;
-    const shadow = this.shadowRoot!;
-    const nameEl = shadow.getElementById('rd-name') as HTMLElement & { value: string };
+  private _removeIngredient(index: number): void {
+    this._ingredients = this._ingredients.filter((_, i) => i !== index);
+    this.requestUpdate();
+  }
 
+  private _updateIngredient(
+    index: number,
+    field: 'productId' | 'quantity' | 'unit',
+    value: string | number | Unit,
+  ): void {
+    this._ingredients = this._ingredients.map((ing, i) =>
+      i === index ? { ...ing, [field]: value } : ing,
+    );
+    // No requestUpdate needed here — the native select/input already reflects the change visually.
+    // Only request update if the ingredient list structure changes (add/remove).
+  }
+
+  private _openDialog(recipeId: string | null): void {
+    this._editingId = recipeId;
     if (recipeId) {
       const recipe = service.getRecipes().find((r) => r.id === recipeId);
-      if (recipe) {
-        nameEl.value = recipe.name;
-        this.ingredients = recipe.ingredients.map((i) => ({ ...i }));
-      }
+      this._ingredients = recipe ? recipe.ingredients.map((i) => ({ ...i })) : [];
     } else {
-      nameEl.value = '';
-      this.ingredients = [];
+      this._ingredients = [];
     }
-
-    this.renderIngredients();
-    const dialog = shadow.getElementById('recipe-dialog') as HTMLElement & { show(): void };
-    dialog.show();
-  }
-
-  private closeDialog(): void {
-    const dialog = this.shadowRoot!.getElementById('recipe-dialog') as HTMLElement & {
-      hide(): void;
-    };
-    dialog.hide();
-  }
-
-  private collectIngredients(): RecipeIngredient[] {
-    const container = this.shadowRoot!.getElementById('ingredients-container')!;
-    const result: RecipeIngredient[] = [];
-    container.querySelectorAll('.ingredient-row').forEach((row) => {
-      const idx = parseInt((row as HTMLElement).dataset['index'] ?? '0');
-      const productId = (row.querySelector('.ing-product') as HTMLSelectElement).value;
-      const qty = parseFloat(
-        (row.querySelector('.ing-qty') as HTMLElement & { value: string }).value || '0',
-      );
-      const unit = (row.querySelector('.ing-unit') as HTMLSelectElement).value as Unit;
-      const ing = this.ingredients[idx];
-      if (productId && qty > 0) {
-        result.push({
-          productId,
-          quantity: qty,
-          unit,
-          flags: ing?.flags ?? [IngredientFlag.fresh],
-        });
+    this.requestUpdate();
+    void this.updateComplete.then(() => {
+      const nameEl = this.shadowRoot!.getElementById('rd-name') as SlWithValue;
+      if (recipeId) {
+        const recipe = service.getRecipes().find((r) => r.id === recipeId);
+        nameEl.value = recipe?.name ?? '';
+      } else {
+        nameEl.value = '';
       }
+      (this.shadowRoot!.getElementById('recipe-dialog') as SlDialog).show();
     });
-    return result;
   }
 
-  private saveRecipe(): void {
-    const shadow = this.shadowRoot!;
-    const name = (shadow.getElementById('rd-name') as HTMLElement & { value: string }).value.trim();
+  private _closeDialog(): void {
+    (this.shadowRoot!.getElementById('recipe-dialog') as SlDialog).hide();
+  }
+
+  private _saveRecipe(): void {
+    const name = (this.shadowRoot!.getElementById('rd-name') as SlWithValue).value.trim();
     if (!name) {
       alert('Vul een naam in voor het recept.');
       return;
     }
 
-    const ingredients = this.collectIngredients();
+    const ingredients = this._ingredients.filter((ing) => ing.productId && ing.quantity > 0);
     const recipeData: Omit<Recipe, 'id'> = { name, ingredients };
 
-    if (this.editingId) {
-      const existing = service.getRecipes().find((r) => r.id === this.editingId);
+    if (this._editingId) {
+      const existing = service.getRecipes().find((r) => r.id === this._editingId);
       if (existing) {
         service.updateRecipe({ ...existing, ...recipeData });
       }
@@ -264,13 +300,10 @@ class RecipesPage extends HTMLElement {
       service.addRecipe(recipeData);
     }
 
-    this.closeDialog();
-    this.render();
+    this._closeDialog();
+    this._ingredients = [];
+    this.requestUpdate();
   }
-}
-
-function escHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 customElements.define('meal-recipes-page', RecipesPage);
