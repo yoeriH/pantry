@@ -38,14 +38,21 @@ const unitOptions = Object.entries(UNIT_LABELS)
 /** Resolve a source entry to a short Dutch display label. */
 function sourceLabel(source: ShoppingListItemSource, recipeMap: Map<string, Recipe>): string {
   if (source.type === 'recipe') {
-    return recipeMap.get(source.referenceId ?? '')?.name ?? source.note ?? 'recept';
+    if (source.referenceId) {
+      return recipeMap.get(source.referenceId)?.name ?? source.note ?? 'recept';
+    }
+    return source.note ?? 'recept';
   }
   if (source.type === 'pantry') return 'voorraad';
   return 'handmatig';
 }
 
 function escHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 class ShoppingPage extends HTMLElement {
@@ -88,10 +95,7 @@ class ShoppingPage extends HTMLElement {
 
       const renderItemMeta = (item: ShoppingListItem): string => {
         const unit = UNIT_LABELS[item.unit] ?? item.unit;
-        const sources = item.sources
-          .map((s) => sourceLabel(s, recipeMap))
-          .filter((v, i, arr) => arr.indexOf(v) === i) // deduplicate
-          .join(', ');
+        const sources = [...new Set(item.sources.map((s) => sourceLabel(s, recipeMap)))].join(', ');
         return `${item.quantity}\u00a0${escHtml(unit)}${sources ? ` · ${escHtml(sources)}` : ''}`;
       };
 
@@ -297,9 +301,8 @@ class ShoppingPage extends HTMLElement {
         .item-meta {
           font-size: 0.78rem;
           color: #888;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          white-space: normal;
+          line-height: 1.4;
         }
 
         /* ── Maybe-needed section ── */
