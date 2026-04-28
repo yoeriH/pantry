@@ -67,6 +67,19 @@ const DAYS_IN_WEEK = 7;
 // Result types
 // ---------------------------------------------------------------------------
 
+export interface CopyPreviousWeekResult {
+  /** True when a previous-week plan was found and copied. */
+  copied: true;
+  mealPlan: MealPlan;
+}
+
+export interface CopyPreviousWeekNotFoundResult {
+  copied: false;
+  reason: 'previous_week_not_found';
+}
+
+export type CopyPreviousWeekOutcome = CopyPreviousWeekResult | CopyPreviousWeekNotFoundResult;
+
 export interface CompleteShoppingTripResult {
   /** The archived shopping list (has completedAt). */
   completedList: ShoppingList;
@@ -222,12 +235,16 @@ export class PantryAppService {
    * `targetWeekStartDate`, shifting each entry's date forward by 7 days and
    * assigning new ids.
    *
-   * Returns undefined (and saves nothing) when no plan exists for the previous week.
+   * Returns `{ copied: true, mealPlan }` on success, or
+   * `{ copied: false, reason: 'previous_week_not_found' }` when no plan exists
+   * for the previous week.
    */
-  copyPreviousWeek(targetWeekStartDate: string): MealPlan | undefined {
+  copyPreviousWeek(targetWeekStartDate: string): CopyPreviousWeekOutcome {
     const previousWeekStartDate = addDays(targetWeekStartDate, -DAYS_IN_WEEK);
     const previousPlan = this.getMealPlan(previousWeekStartDate);
-    if (!previousPlan) return undefined;
+    if (!previousPlan) {
+      return { copied: false, reason: 'previous_week_not_found' };
+    }
 
     const newEntries: MealPlanEntry[] = previousPlan.entries.map((entry) => ({
       ...entry,
@@ -242,7 +259,7 @@ export class PantryAppService {
     };
 
     this.repos.mealPlans.save(newPlan);
-    return newPlan;
+    return { copied: true, mealPlan: newPlan };
   }
 
   /**
@@ -365,7 +382,8 @@ export class PantryAppService {
     const products = this.repos.products.getAll();
 
     // Carry over manual items from any existing active list.
-    const existingActive = this.getActiveShoppingList();
+    const allActiveLists = this.repos.shoppingLists.getAll().filter((sl) => !sl.completedAt);
+    const existingActive = allActiveLists[0];
     const manualItems: ShoppingListItem[] = existingActive
       ? existingActive.items.filter((item) => item.sources.every((s) => s.type === 'manual'))
       : [];
@@ -384,8 +402,9 @@ export class PantryAppService {
     // Assign a fresh id so repeated generation never overwrites archived lists.
     const newList: ShoppingList = { ...generated, id: this.repos.createId('sl') };
 
-    if (existingActive) {
-      this.repos.shoppingLists.delete(existingActive.id);
+    // Delete ALL active lists to enforce the single-list invariant before saving the new one.
+    for (const active of allActiveLists) {
+      this.repos.shoppingLists.delete(active.id);
     }
     this.repos.shoppingLists.save(newList);
     return newList;

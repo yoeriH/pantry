@@ -441,26 +441,31 @@ describe('PantryAppService — Meal plan', () => {
     };
     service.saveMealPlan(prevPlan);
 
-    const copied = service.copyPreviousWeek('2026-04-26');
+    const result = service.copyPreviousWeek('2026-04-26');
 
-    expect(copied).toBeDefined();
-    expect(copied!.weekStartDate).toBe('2026-04-26');
-    expect(copied!.entries).toHaveLength(2);
+    expect(result.copied).toBe(true);
+    if (!result.copied) return;
+
+    expect(result.mealPlan.weekStartDate).toBe('2026-04-26');
+    expect(result.mealPlan.entries).toHaveLength(2);
 
     // Dates shifted by +7
-    expect(copied!.entries[0]?.date).toBe('2026-04-26');
-    expect(copied!.entries[1]?.date).toBe('2026-04-28');
+    expect(result.mealPlan.entries[0]?.date).toBe('2026-04-26');
+    expect(result.mealPlan.entries[1]?.date).toBe('2026-04-28');
 
     // New ids, different from original
-    expect(copied!.entries[0]?.id).not.toBe('mpe-orig-1');
-    expect(copied!.entries[1]?.id).not.toBe('mpe-orig-2');
+    expect(result.mealPlan.entries[0]?.id).not.toBe('mpe-orig-1');
+    expect(result.mealPlan.entries[1]?.id).not.toBe('mpe-orig-2');
 
     // Saved and retrievable
     expect(service.getMealPlan('2026-04-26')).toBeDefined();
   });
 
-  it('copyPreviousWeek returns undefined when no previous week plan exists', () => {
-    expect(service.copyPreviousWeek('2026-04-26')).toBeUndefined();
+  it('copyPreviousWeek returns copied=false with reason when no previous week plan exists', () => {
+    const result = service.copyPreviousWeek('2026-04-26');
+    expect(result.copied).toBe(false);
+    if (result.copied) return;
+    expect(result.reason).toBe('previous_week_not_found');
   });
 });
 
@@ -848,6 +853,36 @@ describe('PantryAppService — Shopping list', () => {
 
   it('completeShoppingTrip throws when no active list exists', () => {
     expect(() => service.completeShoppingTrip(NOW)).toThrow('No active shopping list found');
+  });
+
+  it('generateShoppingListFromCurrentPlan replaces an existing active list', () => {
+    deps.shoppingLists.save({ id: 'sl-existing', createdAt: NOW, items: [] });
+
+    const list = service.generateShoppingListFromCurrentPlan('2026-04-26', NOW);
+
+    expect(service.getActiveShoppingList()?.id).toBe(list.id);
+    expect(deps.shoppingLists.getById('sl-existing')).toBeUndefined();
+  });
+
+  it('generateShoppingListFromCurrentPlan called twice leaves exactly one active list', () => {
+    service.generateShoppingListFromCurrentPlan('2026-04-26', NOW);
+    const list2 = service.generateShoppingListFromCurrentPlan('2026-04-26', NOW);
+
+    const allActive = deps.shoppingLists.getAll().filter((sl) => !sl.completedAt);
+    expect(allActive).toHaveLength(1);
+    expect(allActive[0]?.id).toBe(list2.id);
+  });
+
+  it('generateShoppingListFromCurrentPlan deletes all active lists when multiple exist', () => {
+    // Simulate a situation where multiple active lists ended up in storage.
+    deps.shoppingLists.save({ id: 'sl-stale-1', createdAt: NOW, items: [] });
+    deps.shoppingLists.save({ id: 'sl-stale-2', createdAt: NOW, items: [] });
+
+    const list = service.generateShoppingListFromCurrentPlan('2026-04-26', NOW);
+
+    const allActive = deps.shoppingLists.getAll().filter((sl) => !sl.completedAt);
+    expect(allActive).toHaveLength(1);
+    expect(allActive[0]?.id).toBe(list.id);
   });
 });
 
