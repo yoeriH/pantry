@@ -404,7 +404,7 @@ These are the rules the app must follow when generating suggestions:
 
 - **Simple beats smart.** Prefer rules a user can predict over models they can't.
 - **Reliable beats magical.** Wrong-but-confident suggestions destroy trust.
-- **Explainable.** The user must understand *why* an item appears on the list (voorraad / recept / handmatig / misschien nodig).
+- **Explainable.** The user must understand _why_ an item appears on the list (voorraad / recept / handmatig / misschien nodig).
 - **Fast correction.** Overriding pantry status or removing a suggestion must take one or two taps.
 - **One-handed shopping mode.** The shopping list must be readable and tappable one-handed on a phone.
 - **Dutch household language.** UI copy uses everyday Dutch household terms (voorraad, vriezer, boodschappen, mogelijk op, etc.).
@@ -432,27 +432,27 @@ These are explicitly out of scope for MVP, but are anticipated directions:
 
 ## 11. Glossary
 
-| Dutch term            | Meaning in Pantry                                                                              |
-| --------------------- | ---------------------------------------------------------------------------------------------- |
-| Voorraad              | Pantry — the set of products the household tracks status for.                                  |
-| Voorraadkast          | Pantry cupboard area.                                                                          |
-| Koelkast              | Fridge area.                                                                                   |
-| Vriezer               | Freezer; tracks **portions**, not just status.                                                 |
-| Huishouden            | Household supplies area (cleaning, paper, etc.).                                               |
-| Cosmetica/deo         | Personal care area.                                                                            |
-| Overige               | Catch-all area / category.                                                                     |
-| Genoeg / in huis      | Status: enough in the house.                                                                   |
-| Mogelijk op / bijna op | Status: possibly running out, candidate for shopping list.                                    |
-| Op                    | Status: out.                                                                                   |
-| Misschien nodig       | "Maybe needed" — uncertain shopping-list state requiring user resolution.                      |
-| Weekmenu              | The Saturday-through-Friday meal plan with breakfast / lunch / dinner / snack slots.           |
-| Vriezerportie         | One freezer portion = one whole-household portion.                                             |
-| Recept                | Recipe; expressed in family portions, with structured ingredients and units.                   |
-| Boodschappenlijst     | Shopping list; one shared household list, mobile-first.                                        |
-| Boodschappen afronden | Completing a shopping trip — checked items update voorraad and purchase history.               |
-| Koopgedrag / koopgeschiedenis | Purchase history derived from completed shopping trips.                                |
-| Gaat sneller / langzamer op | Temporary one-shot adjustment of a prediction (±25%).                                    |
-| Handmatig             | Source label: item added manually, not from voorraad or a recipe.                              |
+| Dutch term                    | Meaning in Pantry                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------------ |
+| Voorraad                      | Pantry — the set of products the household tracks status for.                        |
+| Voorraadkast                  | Pantry cupboard area.                                                                |
+| Koelkast                      | Fridge area.                                                                         |
+| Vriezer                       | Freezer; tracks **portions**, not just status.                                       |
+| Huishouden                    | Household supplies area (cleaning, paper, etc.).                                     |
+| Cosmetica/deo                 | Personal care area.                                                                  |
+| Overige                       | Catch-all area / category.                                                           |
+| Genoeg / in huis              | Status: enough in the house.                                                         |
+| Mogelijk op / bijna op        | Status: possibly running out, candidate for shopping list.                           |
+| Op                            | Status: out.                                                                         |
+| Misschien nodig               | "Maybe needed" — uncertain shopping-list state requiring user resolution.            |
+| Weekmenu                      | The Saturday-through-Friday meal plan with breakfast / lunch / dinner / snack slots. |
+| Vriezerportie                 | One freezer portion = one whole-household portion.                                   |
+| Recept                        | Recipe; expressed in family portions, with structured ingredients and units.         |
+| Boodschappenlijst             | Shopping list; one shared household list, mobile-first.                              |
+| Boodschappen afronden         | Completing a shopping trip — checked items update voorraad and purchase history.     |
+| Koopgedrag / koopgeschiedenis | Purchase history derived from completed shopping trips.                              |
+| Gaat sneller / langzamer op   | Temporary one-shot adjustment of a prediction (±25%).                                |
+| Handmatig                     | Source label: item added manually, not from voorraad or a recipe.                    |
 
 ---
 
