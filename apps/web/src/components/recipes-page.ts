@@ -252,8 +252,11 @@ class RecipesPage extends LitElement {
     this._ingredients = this._ingredients.map((ing, i) =>
       i === index ? { ...ing, [field]: value } : ing,
     );
-    // No requestUpdate needed here — the native select/input already reflects the change visually.
-    // Only request update if the ingredient list structure changes (add/remove).
+    // Intentionally no requestUpdate() here: the user's input/select already
+    // reflects the value visually, and calling requestUpdate() would re-set the
+    // .value property on each keystroke which can reset the cursor position in
+    // number inputs. The updated _ingredients array is read on the next render
+    // triggered by _addIngredient(), _removeIngredient(), or _saveRecipe().
   }
 
   private _openDialog(recipeId: string | null): void {
